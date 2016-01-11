@@ -159,7 +159,8 @@ namespace GoogleVoiceAPI
                 if (gmsg.Count > 0)
                 {
                     foreach(GMessage x in gmsg) {
-                        this.OnMessageReceived.Invoke(this, new MessageReceivedEvent(x));
+                        if (x.MessageType == MessageType.Received)
+                            this.OnMessageReceived.Invoke(this, new MessageReceivedEvent(x));
                     }
                 }
             }            
