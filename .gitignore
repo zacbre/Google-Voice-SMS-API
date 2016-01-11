@@ -48,3 +48,6 @@ Temporary Items
 *.exe
 *.pdb
 *.manifest
+*.txt
+*.cache
+*.cache

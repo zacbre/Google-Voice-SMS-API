@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Text;
 using HtmlAgilityPack;
@@ -61,6 +60,7 @@ namespace GoogleVoiceAPI
             string auth3_url = this.action_url;
 
             ret = this.POST(auth3_url, fields, auth2_url);
+            if (ret == null) return false;
 
             this.gvx = this.GetGVX();
 
@@ -103,7 +103,7 @@ namespace GoogleVoiceAPI
                 JToken s = l["settings_response"]["did_info"][0];
                 this.acc = (AccountSettings)JsonConvert.DeserializeObject<AccountSettings>(s.ToString());
             }
-            catch { }
+            catch (Exception ex) { Console.WriteLine(ex.ToString()); }
         }
 
         public GMessageCollection GetAllMessages() 
@@ -117,8 +117,9 @@ namespace GoogleVoiceAPI
                 GMessageCollection g = (GMessageCollection)ser.Deserialize(new JTokenReader(l["conversations_response"]), typeof(GMessageCollection));
                 return g;
             }
-            catch
-            { 
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
                 return null;
             }
         }
@@ -144,6 +145,7 @@ namespace GoogleVoiceAPI
         private void RefreshMessages()
         {
             GMessageCollection s = this.GetAllMessages();
+            if (s == null) return;
             if (Tracking == null)
             {
                 Tracking = new MessageTracking();
@@ -159,7 +161,7 @@ namespace GoogleVoiceAPI
                 if (gmsg.Count > 0)
                 {
                     foreach(GMessage x in gmsg) {
-                        if (x.MessageType == MessageType.Received)
+                        if(x.MessageType == MessageType.Received)
                             this.OnMessageReceived.Invoke(this, new MessageReceivedEvent(x));
                     }
                 }
@@ -224,7 +226,9 @@ namespace GoogleVoiceAPI
             {
                 return this.wc.DownloadString(url);
             }
-            catch {
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
                 return null;
             }
         }
@@ -240,31 +244,35 @@ namespace GoogleVoiceAPI
             {
                 return Encoding.ASCII.GetString(this.wc.UploadValues(url, values));
             }
-            catch { return null; }
+            catch (Exception ex) { Console.WriteLine(ex.ToString()); return null; }
         }
 
         private string POST(string url, string fields, string referrer = "")
         {
-            var httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
-            httpWebRequest.ContentType = "application/json";
-            httpWebRequest.Referer = referrer;
-            httpWebRequest.ContentLength = fields.Length;
-            httpWebRequest.CookieContainer = cookie;
-            httpWebRequest.Method = "POST";
-
-            using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
+            try
             {
-                streamWriter.Write(fields);
-                streamWriter.Flush();
-                streamWriter.Close();
-            }
+                var httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
+                httpWebRequest.ContentType = "application/json";
+                httpWebRequest.Referer = referrer;
+                httpWebRequest.ContentLength = fields.Length;
+                httpWebRequest.CookieContainer = cookie;
+                httpWebRequest.Method = "POST";
 
-            var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-            using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-            {
-                var result = streamReader.ReadToEnd();
-                return result;
+                using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
+                {
+                    streamWriter.Write(fields);
+                    streamWriter.Flush();
+                    streamWriter.Close();
+                }
+
+                var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+                using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+                {
+                    var result = streamReader.ReadToEnd();
+                    return result;
+                }
             }
+            catch (Exception ex) { Console.WriteLine(ex.ToString());  return null; }
         }
     }
 }
