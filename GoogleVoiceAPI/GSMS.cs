@@ -228,6 +228,8 @@ namespace GoogleVoiceAPI
             }
             catch (Exception ex)
             {
+                this.Login();
+                this.GET(url);
                 Console.WriteLine(ex.ToString());
                 return null;
             }
@@ -244,7 +246,7 @@ namespace GoogleVoiceAPI
             {
                 return Encoding.ASCII.GetString(this.wc.UploadValues(url, values));
             }
-            catch (Exception ex) { Console.WriteLine(ex.ToString()); return null; }
+            catch (Exception ex) { this.Login(); this.POST(url, values, referrer); Console.WriteLine(ex.ToString()); return null; }
         }
 
         private string POST(string url, string fields, string referrer = "")
@@ -272,7 +274,7 @@ namespace GoogleVoiceAPI
                     return result;
                 }
             }
-            catch (Exception ex) { Console.WriteLine(ex.ToString());  return null; }
+            catch (Exception ex) { this.Login(); this.POST(url, fields, referrer); Console.WriteLine(ex.ToString()); return null; }
         }
     }
 }
